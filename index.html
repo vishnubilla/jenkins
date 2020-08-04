@@ -37,7 +37,7 @@
       register: grep_results
     - name: debug grep results
       debug: 
-        msg: "{{ hostvars['3.15.188.216'] }}"
+        msg: "{{ hostvars['18.188.102.247'] }}"
       when: grep_results.rc != 0
   handlers:
     - name: restart jenkins
