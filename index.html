@@ -1,3 +1,46 @@
-second
-third
-444
+- hosts: web
+  remote_user: ec2-user
+  become: yes
+  vars:
+     jenkins_port: 8080
+  tasks: 
+    - name: jenkins installation from yum
+      yum_repository:
+        name: jenkins
+        description: jenkins
+        baseurl: sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
+        gpgkey:  sudo rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
+
+    - name : Install jenkins and Java
+      package:
+        name: "{{item}}"
+        state: present
+      loop:
+        - java
+        - jenkins
+        - httpd
+
+    - name: we are going to start the service
+      service:
+          name: jenkins # required. Name of the service.
+          enabled: yes # not required. Whether the service should start on boot. B(At least one of state and enabled are required.)
+          state: started 
+    - name: change default port number
+      lineinfile:
+          path: /etc/sysconfig/jenkins
+          regexp: '^JENKINS_PORT='
+          line: "JENKINS_PORT={{ jenkins_port }}"
+      notify:
+        - restart jenkins
+    - name: validate port change
+      command: "grep -i JENKINS_PORT /etc/sysconfig/jenkins"
+      register: grep_results
+    - name: debug grep results
+      debug: 
+        msg: "{{ hostvars['3.15.188.216'] }}"
+      when: grep_results.rc != 0
+  handlers:
+    - name: restart jenkins
+      service:
+          name: jenkins # required. Name of the service.
+          state: restarted
